@@ -57,8 +57,8 @@ def upload_file():
         try:
             file = request.files['file']
             if file:
-                file_path = f"./uploads/{file.filename}"  # Save the file to a directory
-                file.save(file_path)
+                #file_path = f"./uploads/{file.filename}"  # Save the file to a directory
+                #file.save(file_path)
                 resumeText = extract_text_from_cv(file_path)
 
                 # Create the completion request
