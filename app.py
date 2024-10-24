@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from flask import Flask, request, jsonify, render_template
 import docx2txt
 import PyPDF2
@@ -11,6 +10,9 @@ from groq import Groq
 
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16 MB limit
+
+# Initialize Groq client
+client = groq.Groq(api_key=os.environ["GROQ_API_KEY"])
 
 # Ensure uploads directory exists
 if not os.path.exists('uploads'):
@@ -44,8 +46,6 @@ def extract_text_from_cv(file_path):
     except Exception as e:
         return f"An error occurred: {e}"
 
-# Initialize Groq client
-client = groq.Groq(api_key=os.environ["GROQ_API_KEY"])
 
 @app.route('/')
 def landing_page():
