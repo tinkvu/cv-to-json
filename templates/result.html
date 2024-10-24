@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume JSON Output</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        pre {
+            background-color: #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title text-center">Resume JSON Output</h1>
+                <pre id="jsonOutput">{{ resume_json | tojson(indent=4) }}</pre>  <!-- Display JSON in a formatted way -->
+                <div class="text-center">
+                    <button class="btn btn-success" id="copyButton">Copy to Clipboard</button>
+                    <a href="#" class="btn btn-primary" id="downloadButton">Download JSON</a>
+                    <br>
+                    <a href="/" class="btn btn-secondary btn-block">Upload Another CV</a>  <!-- Link to go back to upload form -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        // Copy to Clipboard functionality
+        document.getElementById('copyButton').addEventListener('click', function() {
+            const jsonOutput = document.getElementById('jsonOutput').innerText;
+            navigator.clipboard.writeText(jsonOutput).then(function() {
+                alert('JSON copied to clipboard!');
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+            });
+        });
+
+        // Download JSON functionality
+        document.getElementById('downloadButton').addEventListener('click', function() {
+            const jsonOutput = document.getElementById('jsonOutput').innerText;
+            const blob = new Blob([jsonOutput], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'resume.json';  // Name of the downloaded file
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);  // Clean up
+        });
+    </script>
+</body>
+</html>
