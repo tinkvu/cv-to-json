@@ -3,7 +3,7 @@ import docx2txt
 import PyPDF2
 import os
 import json
-from groq import Groq
+from groq
 
 # Add Flask to your dependencies
 # pip install Flask docx2txt PyPDF2 groq
