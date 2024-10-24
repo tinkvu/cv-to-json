@@ -45,9 +45,7 @@ def extract_text_from_cv(file_path):
         return f"An error occurred: {e}"
 
 # Initialize Groq client
-client = Groq(
-    api_key="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",
-)
+client = groq.Groq(api_key=os.environ["GROQ_API_KEY"])
 
 @app.route('/')
 def landing_page():
