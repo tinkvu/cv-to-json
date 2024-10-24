@@ -11,6 +11,13 @@
       "src": "/(.*)",
       "dest": "app.py"
     }
-  ]
+  ],
+  "build": {
+    "env": {
+      "GROQ_API_KEY": "@groq_api_key"  // Example of setting an environment variable
+    },
+    "commands": {
+      "install": "pip install -r requirements.txt"  // Install dependencies
+    }
+  }
 }
-
