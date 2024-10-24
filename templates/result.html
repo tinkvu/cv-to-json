@@ -30,13 +30,14 @@
         <div class="card">
             <div class="card-body">
                 <h1 class="card-title text-center">Resume JSON Output</h1>
-                <pre id="jsonOutput">{{ resume_json | tojson(indent=4) }}</pre>  <!-- Display JSON in a formatted way -->
-                <div class="text-center">
+                 <div class="text-center">
                     <button class="btn btn-success" id="copyButton">Copy to Clipboard</button>
                     <a href="#" class="btn btn-primary" id="downloadButton">Download JSON</a>
                     <br>
                     <a href="/" class="btn btn-secondary btn-block">Upload Another CV</a>  <!-- Link to go back to upload form -->
                 </div>
+                <pre id="jsonOutput">{{ resume_json | tojson(indent=4) }}</pre>  <!-- Display JSON in a formatted way -->
+               
             </div>
         </div>
     </div>
