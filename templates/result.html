@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume JSON Output</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 30px auto;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            background: white;
+        }
+        .card-body {
+            padding: 2rem;
+        }
+        .card-title {
+            color: #2c3e50;
+            margin-bottom: 2rem;
+            font-weight: 600;
+        }
+        .btn-group {
+            margin-bottom: 20px;
+        }
+        .btn {
+            margin: 0 5px;
+            padding: 8px 20px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .json-container {
+            position: relative;
+            margin-top: 20px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        pre[class*="language-"] {
+            margin: 0;
+            border-radius: 8px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .expand-collapse {
+            margin-bottom: 10px;
+        }
+        .copy-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #28a745;
+            color: white;
+            border-radius: 5px;
+            display: none;
+            animation: fadeInOut 2s ease-in-out;
+        }
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            15% { opacity: 1; }
+            85% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+        .control-panel {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .search-container {
+            flex-grow: 1;
+            max-width: 300px;
+        }
+        #searchInput {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="card-body">
+                <h1 class="card-title text-center">Resume JSON Output</h1>
+                
+                <div class="control-panel">
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="expandAll">Expand All</button>
+                        <button class="btn btn-secondary" id="collapseAll">Collapse All</button>
+                    </div>
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="Search JSON...">
+                    </div>
+                    <button class="btn btn-success" id="copyButton">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button class="btn btn-info" id="downloadButton">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                    <a href="/" class="btn btn-warning">
+                        <i class="fas fa-upload"></i> Upload New
+                    </a>
+                </div>
+
+                <div class="json-container">
+                    <pre><code class="language-json" id="jsonOutput">{{ resume_json | tojson(indent=4) }}</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="copy-indicator">Copied to clipboard!</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-json.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/js/all.min.js"></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const jsonOutput = document.getElementById('jsonOutput');
+            const copyButton = document.getElementById('copyButton');
+            const downloadButton = document.getElementById('downloadButton');
+            const expandAllBtn = document.getElementById('expandAll');
+            const collapseAllBtn = document.getElementById('collapseAll');
+            const searchInput = document.getElementById('searchInput');
+            const copyIndicator = document.querySelector('.copy-indicator');
+
+            // Parse and format JSON
+            function formatJSON(json) {
+                try {
+                    const obj = typeof json === 'string' ? JSON.parse(json) : json;
+                    return JSON.stringify(obj, null, 2);
+                } catch (e) {
+                    console.error('JSON parsing error:', e);
+                    return json;
+                }
+            }
+
+            // Initialize with formatted JSON
+            jsonOutput.textContent = formatJSON(jsonOutput.textContent);
+            Prism.highlightElement(jsonOutput);
+
+            // Copy functionality
+            copyButton.addEventListener('click', function() {
+                const text = jsonOutput.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    copyIndicator.style.display = 'block';
+                    setTimeout(() => {
+                        copyIndicator.style.display = 'none';
+                    }, 2000);
+                }).catch(err => {
+                    console.error('Copy failed:', err);
+                    alert('Failed to copy to clipboard');
+                });
+            });
+
+            // Download functionality
+            downloadButton.addEventListener('click', function() {
+                const text = jsonOutput.textContent;
+                const blob = new Blob([text], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'resume.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            });
+
+            // Search functionality
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const jsonText = jsonOutput.textContent;
+                
+                if (searchTerm === '') {
+                    jsonOutput.textContent = formatJSON(jsonText);
+                    Prism.highlightElement(jsonOutput);
+                    return;
+                }
+
+                try {
+                    const jsonObj = JSON.parse(jsonText);
+                    highlightSearchResults(jsonObj, searchTerm);
+                } catch (e) {
+                    console.error('Search error:', e);
+                }
+            });
+
+            function highlightSearchResults(obj, term) {
+                const formatted = JSON.stringify(obj, null, 2);
+                const highlighted = formatted.replace(
+                    new RegExp(term, 'gi'),
+                    match => `<mark>${match}</mark>`
+                );
+                jsonOutput.innerHTML = highlighted;
+                Prism.highlightElement(jsonOutput);
+            }
+
+            // JSON expansion/collapse functionality
+            function addToggleButtons() {
+                const brackets = jsonOutput.querySelectorAll('.token.punctuation');
+                brackets.forEach(bracket => {
+                    if (bracket.textContent === '{' || bracket.textContent === '[') {
+                        const span = document.createElement('span');
+                        span.textContent = '▼';
+                        span.className = 'toggle-btn';
+                        span.style.cursor = 'pointer';
+                        span.style.marginRight = '5px';
+                        bracket.parentNode.insertBefore(span, bracket);
+                    }
+                });
+            }
+
+            expandAllBtn.addEventListener('click', () => {
+                const toggleBtns = document.querySelectorAll('.toggle-btn');
+                toggleBtns.forEach(btn => {
+                    btn.textContent = '▼';
+                    const content = btn.nextElementSibling;
+                    if (content) content.style.display = 'block';
+                });
+            });
+
+            collapseAllBtn.addEventListener('click', () => {
+                const toggleBtns = document.querySelectorAll('.toggle-btn');
+                toggleBtns.forEach(btn => {
+                    btn.textContent = '▶';
+                    const content = btn.nextElementSibling;
+                    if (content) content.style.display = 'none';
+                });
+            });
+
+            // Initial setup
+            addToggleButtons();
+        });
+    </script>
+</body>
+</html>
