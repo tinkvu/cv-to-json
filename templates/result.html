@@ -55,9 +55,6 @@
             max-height: 600px;
             overflow-y: auto;
         }
-        .expand-collapse {
-            margin-bottom: 10px;
-        }
         .copy-indicator {
             position: fixed;
             top: 20px;
@@ -91,6 +88,46 @@
             border: 1px solid #ced4da;
             border-radius: 8px;
         }
+        .json-tree {
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        .json-tree ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            margin-left: 20px;
+        }
+        .json-tree li {
+            position: relative;
+        }
+        .toggle {
+            cursor: pointer;
+            position: absolute;
+            left: -15px;
+            top: 0;
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+        .toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+        .key {
+            color: #2e86de;
+            margin-right: 5px;
+        }
+        .string { color: #10ac84; }
+        .number { color: #ee5253; }
+        .boolean { color: #ff9f43; }
+        .null { color: #8395a7; }
+        .hidden {
+            display: none;
+        }
+        .collapsed-preview {
+            color: #8395a7;
+            font-style: italic;
+        }
     </style>
 </head>
 <body>
@@ -119,7 +156,8 @@
                 </div>
 
                 <div class="json-container">
-                    <pre><code class="language-json" id="jsonOutput">{{ resume_json | tojson(indent=4) }}</code></pre>
+                    <div id="jsonTree" class="json-tree"></div>
+                    <pre style="display: none;"><code class="language-json" id="jsonOutput">{{ resume_json | tojson(indent=4) }}</code></pre>
                 </div>
             </div>
         </div>
@@ -134,6 +172,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const jsonOutput = document.getElementById('jsonOutput');
+            const jsonTree = document.getElementById('jsonTree');
             const copyButton = document.getElementById('copyButton');
             const downloadButton = document.getElementById('downloadButton');
             const expandAllBtn = document.getElementById('expandAll');
@@ -141,20 +180,112 @@
             const searchInput = document.getElementById('searchInput');
             const copyIndicator = document.querySelector('.copy-indicator');
 
-            // Parse and format JSON
-            function formatJSON(json) {
-                try {
-                    const obj = typeof json === 'string' ? JSON.parse(json) : json;
-                    return JSON.stringify(obj, null, 2);
-                } catch (e) {
-                    console.error('JSON parsing error:', e);
-                    return json;
-                }
+            let jsonData;
+            try {
+                jsonData = JSON.parse(jsonOutput.textContent);
+            } catch (e) {
+                console.error('JSON parsing error:', e);
+                jsonData = {};
             }
 
-            // Initialize with formatted JSON
-            jsonOutput.textContent = formatJSON(jsonOutput.textContent);
-            Prism.highlightElement(jsonOutput);
+            function createTreeNode(key, value, isLast = true) {
+                const li = document.createElement('li');
+                const isObject = value !== null && typeof value === 'object';
+                
+                if (isObject) {
+                    const toggle = document.createElement('span');
+                    toggle.className = 'toggle';
+                    toggle.textContent = '▼';
+                    toggle.onclick = function() {
+                        const ul = this.parentNode.querySelector('ul');
+                        const isCollapsed = this.classList.contains('collapsed');
+                        
+                        if (isCollapsed) {
+                            ul.style.display = 'block';
+                            this.textContent = '▼';
+                            this.classList.remove('collapsed');
+                            this.nextElementSibling.querySelector('.collapsed-preview').style.display = 'none';
+                        } else {
+                            ul.style.display = 'none';
+                            this.textContent = '▶';
+                            this.classList.add('collapsed');
+                            this.nextElementSibling.querySelector('.collapsed-preview').style.display = 'inline';
+                        }
+                    };
+                    li.appendChild(toggle);
+                }
+
+                const content = document.createElement('span');
+                if (key !== undefined) {
+                    const keySpan = document.createElement('span');
+                    keySpan.className = 'key';
+                    keySpan.textContent = `"${key}": `;
+                    content.appendChild(keySpan);
+                }
+
+                if (isObject) {
+                    const isArray = Array.isArray(value);
+                    const preview = document.createElement('span');
+                    preview.className = 'collapsed-preview';
+                    preview.style.display = 'none';
+                    preview.textContent = isArray ? '[...]' : '{...}';
+                    content.appendChild(document.createTextNode(isArray ? '[' : '{'));
+                    content.appendChild(preview);
+                    li.appendChild(content);
+
+                    const ul = document.createElement('ul');
+                    const entries = isArray ? value.entries() : Object.entries(value);
+                    for (const [k, v] of entries) {
+                        ul.appendChild(createTreeNode(isArray ? undefined : k, v, false));
+                    }
+                    li.appendChild(ul);
+
+                    const closing = document.createElement('span');
+                    closing.textContent = isArray ? ']' : '}';
+                    if (!isLast) closing.textContent += ',';
+                    li.appendChild(closing);
+                } else {
+                    let valueText = '';
+                    let valueClass = '';
+                    
+                    if (typeof value === 'string') {
+                        valueText = `"${value}"`;
+                        valueClass = 'string';
+                    } else if (typeof value === 'number') {
+                        valueText = value;
+                        valueClass = 'number';
+                    } else if (typeof value === 'boolean') {
+                        valueText = value;
+                        valueClass = 'boolean';
+                    } else if (value === null) {
+                        valueText = 'null';
+                        valueClass = 'null';
+                    }
+
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = valueClass;
+                    valueSpan.textContent = valueText;
+                    if (!isLast) valueSpan.textContent += ',';
+                    content.appendChild(valueSpan);
+                    li.appendChild(content);
+                }
+
+                return li;
+            }
+
+            // Initialize tree
+            jsonTree.appendChild(createTreeNode(undefined, jsonData));
+
+            // Expand/Collapse All functionality
+            expandAllBtn.addEventListener('click', () => {
+                const toggles = document.querySelectorAll('.toggle.collapsed');
+                toggles.forEach(toggle => toggle.click());
+            });
+
+            collapseAllBtn.addEventListener('click', () => {
+                const toggles = document.querySelectorAll('.toggle:not(.collapsed)');
+                toggles.forEach(toggle => toggle.click());
+            });
 
             // Copy functionality
             copyButton.addEventListener('click', function() {
@@ -187,67 +318,27 @@
             // Search functionality
             searchInput.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase();
-                const jsonText = jsonOutput.textContent;
+                const elements = document.querySelectorAll('.json-tree .key, .json-tree .string, .json-tree .number, .json-tree .boolean, .json-tree .null');
                 
-                if (searchTerm === '') {
-                    jsonOutput.textContent = formatJSON(jsonText);
-                    Prism.highlightElement(jsonOutput);
-                    return;
-                }
-
-                try {
-                    const jsonObj = JSON.parse(jsonText);
-                    highlightSearchResults(jsonObj, searchTerm);
-                } catch (e) {
-                    console.error('Search error:', e);
-                }
-            });
-
-            function highlightSearchResults(obj, term) {
-                const formatted = JSON.stringify(obj, null, 2);
-                const highlighted = formatted.replace(
-                    new RegExp(term, 'gi'),
-                    match => `<mark>${match}</mark>`
-                );
-                jsonOutput.innerHTML = highlighted;
-                Prism.highlightElement(jsonOutput);
-            }
-
-            // JSON expansion/collapse functionality
-            function addToggleButtons() {
-                const brackets = jsonOutput.querySelectorAll('.token.punctuation');
-                brackets.forEach(bracket => {
-                    if (bracket.textContent === '{' || bracket.textContent === '[') {
-                        const span = document.createElement('span');
-                        span.textContent = '▼';
-                        span.className = 'toggle-btn';
-                        span.style.cursor = 'pointer';
-                        span.style.marginRight = '5px';
-                        bracket.parentNode.insertBefore(span, bracket);
+                elements.forEach(element => {
+                    const text = element.textContent.toLowerCase();
+                    const parent = element.closest('li');
+                    
+                    if (text.includes(searchTerm)) {
+                        element.style.backgroundColor = searchTerm ? '#ffeb3b50' : 'transparent';
+                        let current = parent;
+                        while (current) {
+                            const toggle = current.querySelector('.toggle');
+                            if (toggle && toggle.classList.contains('collapsed')) {
+                                toggle.click();
+                            }
+                            current = current.parentElement.closest('li');
+                        }
+                    } else {
+                        element.style.backgroundColor = 'transparent';
                     }
                 });
-            }
-
-            expandAllBtn.addEventListener('click', () => {
-                const toggleBtns = document.querySelectorAll('.toggle-btn');
-                toggleBtns.forEach(btn => {
-                    btn.textContent = '▼';
-                    const content = btn.nextElementSibling;
-                    if (content) content.style.display = 'block';
-                });
             });
-
-            collapseAllBtn.addEventListener('click', () => {
-                const toggleBtns = document.querySelectorAll('.toggle-btn');
-                toggleBtns.forEach(btn => {
-                    btn.textContent = '▶';
-                    const content = btn.nextElementSibling;
-                    if (content) content.style.display = 'none';
-                });
-            });
-
-            // Initial setup
-            addToggleButtons();
         });
     </script>
 </body>
