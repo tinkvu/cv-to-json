@@ -9,6 +9,37 @@
         body {
             background-color: #f8f9fa;
         }
+         /* Logo styles */
+        .logo-container {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: #2c3e50;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        .logo:hover {
+            text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            color: #3498db;
+        }
+        .logo span.highlight {
+            color: #3498db;
+        }
+
+        
         .container {
             margin-top: 50px;
         }
@@ -20,6 +51,12 @@
     </style>
 </head>
 <body>
+     <!-- Add Logo -->
+    <div class="logo-container">
+        <a href="/" class="logo">
+            <span class="highlight">CV</span>toJSON
+        </a>
+    </div>
     <div class="container">
         <div class="card">
             <div class="card-body">
